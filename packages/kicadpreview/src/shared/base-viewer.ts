@@ -20,6 +20,7 @@ export abstract class BaseEcadViewer {
         const el = document.createElement("ecad-viewer") as EcadViewerElement;
         el.style.width = "100%";
         el.style.height = "100%";
+        window.hide_header = true;
         this.container.appendChild(el);
         return el;
     }
