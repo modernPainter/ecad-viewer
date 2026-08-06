@@ -1,0 +1,32 @@
+{
+    "name": "kicadpreview",
+    "version": "1.0.1",
+    "description": "KiCad ECAD viewer — SCH / PCB / 3D / BOM preview",
+    "type": "module",
+    "main": "./dist/ecad-viewer.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/ecad-viewer.js",
+            "require": "./dist/ecad-viewer.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "node ./build.js",
+        "clean": "node -e \"import('node:fs').then(f => f.rmSync('dist',{recursive:true,force:true}))\""
+    },
+    "optionalDependencies": {
+        "three": "^0.160.0"
+    },
+    "devDependencies": {
+        "esbuild": "^0.25.0",
+        "typescript": "^5.2.2"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

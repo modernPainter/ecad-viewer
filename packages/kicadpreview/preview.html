@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>KiCad Schematic Viewer</title>
+        <script type="importmap">
+        {
+            "imports": {
+                "kicadpreview": "./dist/ecad-viewer.js",
+                "three": "../node_modules/three/build/three.module.js",
+                "three/addons/": "../node_modules/three/examples/jsm/"
+            }
+        }
+        </script>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: 100%; background: #f5f5f5; }
+            .page {
+                display: flex; flex-direction: column; height: 100vh;
+                padding: 24px; gap: 12px; max-width: 1200px; margin: 0 auto;
+            }
+            .top {
+                display: flex; align-items: center; gap: 8px;
+                padding: 4px 0; flex-shrink: 0;
+            }
+            .top h1 { font-size: 16px; font-weight: 600; color: #222; }
+            .top button {
+                padding: 5px 14px; border: 1px solid #c7c7c7; border-radius: 4px;
+                background: #fff; cursor: pointer; font-size: 13px;
+            }
+            .top button:hover { background: #eef6ff; border-color: #7aa2e3; }
+            .top .status { margin-left: auto; font-size: 12px; color: #888; }
+            .top input[type=file] {
+                position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden;
+            }
+            .viewer-wrap {
+                flex: 1; background: #fff; border-radius: 8px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+                display: flex; min-height: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page">
+            <div class="top">
+                <h1>KiCad 原理图预览</h1>
+                <button id="open-btn">打开文件</button>
+                <button id="sample-btn">加载示例</button>
+                <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
+                <span id="status" class="status">就绪</span>
+            </div>
+            <div class="viewer-wrap" id="viewer-wrap"></div>
+        </div>
+
+        <script type="module">
+            import { SchematicViewer } from "kicadpreview";
+
+            const wrap = document.getElementById("viewer-wrap");
+            const statusEl = document.getElementById("status");
+            const fileInput = document.getElementById("file-input");
+            const viewer = new SchematicViewer(wrap);
+
+            async function loadSample() {
+                statusEl.textContent = "正在加载示例...";
+                try {
+                    const urls = ["/design_blocks/1.kicad_sch"];
+                    await viewer.loadFromUrls(urls);
+                    statusEl.textContent = "已加载示例";
+                } catch (e) {
+                    statusEl.textContent = "加载失败: " + e.message;
+                    console.error(e);
+                }
+            }
+
+            document.getElementById("open-btn").addEventListener("click", () => fileInput.click());
+            fileInput.addEventListener("change", async (e) => {
+                const files = e.target.files;
+                if (!files || !files.length) return;
+                statusEl.textContent = "正在加载...";
+                try {
+                    await viewer.loadFromFiles(files);
+                    statusEl.textContent = "已加载: " + Array.from(files).map(f => f.name).join(", ");
+                } catch (err) {
+                    statusEl.textContent = "加载失败: " + err.message;
+                    console.error(err);
+                }
+                e.target.value = "";
+            });
+            document.getElementById("sample-btn").addEventListener("click", loadSample);
+            loadSample();
+        </script>
+    </body>
+</html>
