@@ -7,6 +7,17 @@ export interface LoadOptions {
     glbUrl?: string;
 }
 
+export interface BomItem {
+    Reference: string;
+    Name: string;
+    Datasheet: string;
+    Footprint: string;
+    Description: string;
+    DNP: boolean;
+    Qty: number;
+    Price: number;
+}
+
 export class SchematicViewer {
     constructor(container: HTMLElement);
     loadFromUrls(urls: string[]): Promise<void>;
@@ -20,6 +31,18 @@ export class PCBViewer {
     loadFromUrls(urls: string[]): Promise<void>;
     loadFromFiles(files: File[] | FileList): Promise<void>;
     readonly element: HTMLElement;
+    dispose(): void;
+}
+
+export class BomViewer {
+    constructor(container: HTMLElement);
+    loadFromUrls(urls: string[]): Promise<BomItem[]>;
+    loadFromFiles(files: File[] | FileList): Promise<BomItem[]>;
+    search(query: string): BomItem[];
+    readonly bomItems: readonly BomItem[];
+    readonly isMobile: boolean;
+    toCsv(): string;
+    toTsv(): string;
     dispose(): void;
 }
 

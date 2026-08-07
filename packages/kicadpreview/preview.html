@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>KiCad Schematic Viewer</title>
+        <title>KiCad ECAD Viewer</title>
         <script type="importmap">
         {
             "imports": {
@@ -25,12 +25,15 @@
                 padding: 4px 0; flex-shrink: 0;
             }
             .top h1 { font-size: 16px; font-weight: 600; color: #222; }
+            .top .sep { width: 1px; height: 24px; background: #ddd; margin: 0 4px; }
             .top button {
                 padding: 5px 14px; border: 1px solid #c7c7c7; border-radius: 4px;
                 background: #fff; cursor: pointer; font-size: 13px;
             }
             .top button:hover { background: #eef6ff; border-color: #7aa2e3; }
-            .top .status { margin-left: auto; font-size: 12px; color: #888; }
+            .top button.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+            .top button.active:hover { background: #4096ff; }
+            .top .status { margin-left: auto; font-size: 12px; color: #888; white-space: nowrap; }
             .top input[type=file] {
                 position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden;
             }
@@ -39,29 +42,113 @@
                 box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
                 display: flex; min-height: 0;
             }
+            .viewer-wrap.hidden { display: none; }
+
+            /* ---- BOM 面板 ---- */
+            .bom-panel {
+                flex: 1; background: #fff; border-radius: 8px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+                display: flex; flex-direction: column; min-height: 0;
+            }
+            .bom-panel.hidden { display: none; }
+            .bom-toolbar {
+                display: flex; align-items: center; gap: 8px;
+                padding: 8px 16px; border-bottom: 1px solid #eee; flex-shrink: 0;
+            }
+            .bom-toolbar span { font-size: 13px; color: #666; }
+            .bom-toolbar button {
+                padding: 4px 12px; border: 1px solid #d9d9d9; border-radius: 4px;
+                background: #fff; cursor: pointer; font-size: 12px;
+            }
+            .bom-toolbar button:hover { border-color: #7aa2e3; color: #1677ff; }
+            .bom-toolbar .count { margin-left: auto; font-size: 12px; color: #999; }
+            .bom-table-wrap { flex: 1; overflow: auto; padding: 0; }
+            .bom-table-wrap table {
+                width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto;
+            }
+            .bom-table-wrap thead { position: sticky; top: 0; z-index: 1; }
+            .bom-table-wrap th {
+                background: #fafafa; color: #555; font-weight: 600;
+                padding: 8px 12px; text-align: left; border-bottom: 2px solid #e8e8e8;
+                white-space: nowrap;
+            }
+            .bom-table-wrap td {
+                padding: 6px 12px; border-bottom: 1px solid #f0f0f0;
+                color: #333; max-width: 300px; overflow: hidden;
+                text-overflow: ellipsis; white-space: nowrap;
+            }
+            .bom-table-wrap tr:hover td { background: #f6f9ff; }
+            .bom-table-wrap tfoot td {
+                padding: 8px 12px; border-top: 2px solid #e8e8e8;
+                background: #fafafa; font-weight: 600; color: #555;
+            }
+            .bom-empty, .bom-loading, .bom-error {
+                display: flex; align-items: center; justify-content: center;
+                flex: 1; color: #999; font-size: 14px;
+            }
+            .bom-error { color: #ff4d4f; }
         </style>
     </head>
     <body>
         <div class="page">
-        <div class="top">
-            <h1>KiCad ECAD 预览</h1>
-            <button id="open-btn">打开文件</button>
-            <button id="sch-sample-btn">加载原理图示例</button>
-            <button id="pcb-sample-btn">加载 PCB 示例</button>
-            <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
-            <span id="status" class="status">就绪</span>
-        </div>
+            <div class="top">
+                <h1>KiCad ECAD 预览</h1>
+                <span class="sep"></span>
+                <button id="preview-tab" class="active">预览</button>
+                <button id="bom-tab">BOM</button>
+                <span class="sep"></span>
+                <button id="sch-sample-btn">原理图示例</button>
+                <button id="pcb-sample-btn">PCB 示例</button>
+                <button id="open-btn">打开文件</button>
+                <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
+                <span id="status" class="status">就绪</span>
+            </div>
             <div class="viewer-wrap" id="viewer-wrap"></div>
+            <div class="bom-panel hidden" id="bom-panel">
+                <div class="bom-toolbar">
+                    <span>BOM 清单</span>
+                    <button id="bom-refresh-btn">刷新</button>
+                    <button id="bom-csv-btn">导出 CSV</button>
+                    <button id="bom-tsv-btn">导出 TSV</button>
+                    <span class="count" id="bom-count"></span>
+                </div>
+                <div class="bom-table-wrap" id="bom-table-wrap"></div>
+            </div>
         </div>
 
         <script type="module">
-            import { SchematicViewer, PCBViewer } from "kicadpreview";
+            import { SchematicViewer, PCBViewer, BomViewer } from "kicadpreview";
 
             const wrap = document.getElementById("viewer-wrap");
+            const bomPanel = document.getElementById("bom-panel");
+            const bomTableWrap = document.getElementById("bom-table-wrap");
+            const bomCount = document.getElementById("bom-count");
             const statusEl = document.getElementById("status");
             const fileInput = document.getElementById("file-input");
+            const previewTab = document.getElementById("preview-tab");
+            const bomTab = document.getElementById("bom-tab");
+            const bomRefresh = document.getElementById("bom-refresh-btn");
+            const bomCsv = document.getElementById("bom-csv-btn");
+            const bomTsv = document.getElementById("bom-tsv-btn");
+
             let viewer = new SchematicViewer(wrap);
+            let bomViewer = new BomViewer(bomTableWrap);
             let currentMode = "sch"; // sch | pcb
+            let currentTab = "preview"; // preview | bom
+            let lastUrls = null, lastFiles = null;
+
+            /* ---- Tab 切换 ---- */
+
+            function setTab(tab) {
+                currentTab = tab;
+                const isPreview = tab === "preview";
+                wrap.classList.toggle("hidden", !isPreview);
+                bomPanel.classList.toggle("hidden", isPreview);
+                previewTab.classList.toggle("active", isPreview);
+                bomTab.classList.toggle("active", !isPreview);
+            }
+
+            /* ---- 模式切换 ---- */
 
             function switchMode(mode) {
                 if (currentMode === mode) return;
@@ -72,41 +159,85 @@
                 currentMode = mode;
             }
 
-            async function loadSample(urls) {
-                statusEl.textContent = "正在加载示例...";
+            /* ---- 加载 ---- */
+
+            async function doLoad(urls, files) {
+                statusEl.textContent = "正在加载...";
+                lastUrls = urls;
+                lastFiles = files;
+                const urlsToLoad = urls?.length ? urls : null;
+                const filesToLoad = files?.length ? files : null;
+
                 try {
-                    // 自动判断模式
-                    const isPcb = urls.some(u => u.toLowerCase().endsWith(".kicad_pcb"));
+                    const isPcb = (urlsToLoad ? urlsToLoad : [])
+                        .some(u => u.toLowerCase().endsWith(".kicad_pcb"))
+                        || (filesToLoad ? Array.from(filesToLoad).some(f => f.name.toLowerCase().endsWith(".kicad_pcb")) : false);
                     switchMode(isPcb ? "pcb" : "sch");
-                    await viewer.loadFromUrls(urls);
-                    statusEl.textContent = "已加载示例";
+
+                    if (urlsToLoad) {
+                        await viewer.loadFromUrls(urlsToLoad);
+                    } else if (filesToLoad) {
+                        await viewer.loadFromFiles(filesToLoad);
+                    }
+                    statusEl.textContent = "已加载";
+                    if (currentTab === "bom") await loadBom();
                 } catch (e) {
                     statusEl.textContent = "加载失败: " + e.message;
                     console.error(e);
                 }
             }
 
+            /* ---- BOM ---- */
+
+            async function loadBom() {
+                try {
+                    if (lastUrls?.length) {
+                        await bomViewer.loadFromUrls(lastUrls);
+                    } else if (lastFiles?.length) {
+                        await bomViewer.loadFromFiles(lastFiles);
+                    } else {
+                        bomTableWrap.innerHTML = '<div class="bom-empty">请先加载文件</div>';
+                        return;
+                    }
+                    const items = bomViewer.bomItems;
+                    bomCount.textContent = `${items.length} 种, ${items.reduce((s,i)=>s+i.Qty,0)} 件`;
+                } catch (e) {
+                    bomCount.textContent = "";
+                    console.error(e);
+                }
+            }
+
+            function download(filename, content, mime) {
+                const blob = new Blob([content], { type: mime });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+
+            /* ---- 事件绑定 ---- */
+
+            previewTab.addEventListener("click", () => setTab("preview"));
+            bomTab.addEventListener("click", () => { setTab("bom"); loadBom(); });
+            bomRefresh.addEventListener("click", () => loadBom());
+            bomCsv.addEventListener("click", () => download("bom.csv", bomViewer.toCsv(), "text/csv"));
+            bomTsv.addEventListener("click", () => download("bom.tsv", bomViewer.toTsv(), "text/tab-separated-values"));
             document.getElementById("open-btn").addEventListener("click", () => fileInput.click());
+
             fileInput.addEventListener("change", async (e) => {
                 const files = e.target.files;
                 if (!files || !files.length) return;
-                statusEl.textContent = "正在加载...";
-                try {
-                    // 自动判断模式
-                    const names = Array.from(files).map(f => f.name.toLowerCase());
-                    const isPcb = names.some(n => n.endsWith(".kicad_pcb"));
-                    switchMode(isPcb ? "pcb" : "sch");
-                    await viewer.loadFromFiles(files);
-                    statusEl.textContent = "已加载: " + Array.from(files).map(f => f.name).join(", ");
-                } catch (err) {
-                    statusEl.textContent = "加载失败: " + err.message;
-                    console.error(err);
-                }
+                await doLoad(null, Array.from(files));
                 e.target.value = "";
             });
-            document.getElementById("sch-sample-btn").addEventListener("click", () => loadSample(["/design_blocks/1.kicad_sch"]));
-            document.getElementById("pcb-sample-btn").addEventListener("click", () => loadSample(["/design_blocks/board.kicad_pcb"]));
-            loadSample(["/design_blocks/1.kicad_sch"]);
+
+            document.getElementById("sch-sample-btn").addEventListener("click", () => doLoad(["/design_blocks/1.kicad_sch"], null));
+            document.getElementById("pcb-sample-btn").addEventListener("click", () => doLoad(["/design_blocks/board.kicad_pcb"], null));
+
+            /* ---- 启动 ---- */
+            setTab("preview");
+            doLoad(["/design_blocks/1.kicad_sch"], null);
         </script>
     </body>
 </html>
