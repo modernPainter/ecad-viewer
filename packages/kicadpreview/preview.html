@@ -43,28 +43,41 @@
     </head>
     <body>
         <div class="page">
-            <div class="top">
-                <h1>KiCad 原理图预览</h1>
-                <button id="open-btn">打开文件</button>
-                <button id="sample-btn">加载示例</button>
-                <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
-                <span id="status" class="status">就绪</span>
-            </div>
+        <div class="top">
+            <h1>KiCad ECAD 预览</h1>
+            <button id="open-btn">打开文件</button>
+            <button id="sch-sample-btn">加载原理图示例</button>
+            <button id="pcb-sample-btn">加载 PCB 示例</button>
+            <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
+            <span id="status" class="status">就绪</span>
+        </div>
             <div class="viewer-wrap" id="viewer-wrap"></div>
         </div>
 
         <script type="module">
-            import { SchematicViewer } from "kicadpreview";
+            import { SchematicViewer, PCBViewer } from "kicadpreview";
 
             const wrap = document.getElementById("viewer-wrap");
             const statusEl = document.getElementById("status");
             const fileInput = document.getElementById("file-input");
-            const viewer = new SchematicViewer(wrap);
+            let viewer = new SchematicViewer(wrap);
+            let currentMode = "sch"; // sch | pcb
 
-            async function loadSample() {
+            function switchMode(mode) {
+                if (currentMode === mode) return;
+                viewer?.dispose();
+                viewer = mode === "pcb"
+                    ? new PCBViewer(wrap)
+                    : new SchematicViewer(wrap);
+                currentMode = mode;
+            }
+
+            async function loadSample(urls) {
                 statusEl.textContent = "正在加载示例...";
                 try {
-                    const urls = ["/design_blocks/1.kicad_sch"];
+                    // 自动判断模式
+                    const isPcb = urls.some(u => u.toLowerCase().endsWith(".kicad_pcb"));
+                    switchMode(isPcb ? "pcb" : "sch");
                     await viewer.loadFromUrls(urls);
                     statusEl.textContent = "已加载示例";
                 } catch (e) {
@@ -79,6 +92,10 @@
                 if (!files || !files.length) return;
                 statusEl.textContent = "正在加载...";
                 try {
+                    // 自动判断模式
+                    const names = Array.from(files).map(f => f.name.toLowerCase());
+                    const isPcb = names.some(n => n.endsWith(".kicad_pcb"));
+                    switchMode(isPcb ? "pcb" : "sch");
                     await viewer.loadFromFiles(files);
                     statusEl.textContent = "已加载: " + Array.from(files).map(f => f.name).join(", ");
                 } catch (err) {
@@ -87,8 +104,9 @@
                 }
                 e.target.value = "";
             });
-            document.getElementById("sample-btn").addEventListener("click", loadSample);
-            loadSample();
+            document.getElementById("sch-sample-btn").addEventListener("click", () => loadSample(["/design_blocks/1.kicad_sch"]));
+            document.getElementById("pcb-sample-btn").addEventListener("click", () => loadSample(["/design_blocks/board.kicad_pcb"]));
+            loadSample(["/design_blocks/1.kicad_sch"]);
         </script>
     </body>
 </html>

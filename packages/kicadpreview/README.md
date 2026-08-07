@@ -36,6 +36,24 @@ npm install kicadpreview
 </script>
 ```
 
+### PCB 预览（新增）
+
+`PCBViewer` 是专注于 PCB 布局预览的轻量接口，仅显示 PCB 视图。
+
+```html
+<div id="viewer" style="width: 800px; height: 600px;"></div>
+
+<script type="module">
+    import { PCBViewer } from "kicadpreview";
+
+    const viewer = new PCBViewer(document.getElementById("viewer"));
+
+    await viewer.loadFromUrls(["/path/to/board.kicad_pcb"]);
+    // 或从文件加载
+    await viewer.loadFromFiles(fileList);
+</script>
+```
+
 ### 完整功能预览（ECadViewerHelper）
 
 `ECadViewerHelper` 保留了完整的 Tab 切换、3D 模型、BOM 等功能，适用于需要多视图切换的场景。
@@ -67,6 +85,32 @@ new SchematicViewer(container: HTMLElement)
 ```
 
 在 `container` 中创建一个 `ecad-viewer` Web Component，自动移除 Tab 头部和底部图标，并激活原理图视图。
+
+#### 方法
+
+| 方法 | 说明 |
+|------|------|
+| `loadFromUrls(urls: string[])` | 从 URL 加载 KiCad 文件（`.kicad_sch`、`.kicad_pcb`、`.kicad_pro`、`.kicad_wks`） |
+| `loadFromFiles(files: File[] \| FileList)` | 从文件列表加载，自动识别 KiCad 文件 |
+| `dispose()` | 销毁实例，释放 DOM 资源 |
+
+#### 属性
+
+| 属性 | 说明 |
+|------|------|
+| `element` | 获取底层 `ecad-viewer` DOM 元素 |
+
+---
+
+### `PCBViewer`
+
+专注于 PCB 布局预览，自动剥离 Tab 切换栏和底部图标，激活 PCB 视图。
+
+#### 构造函数
+
+```typescript
+new PCBViewer(container: HTMLElement)
+```
 
 #### 方法
 
@@ -307,7 +351,8 @@ await viewer.loadFromFiles([schFile1, schFile2, schFile3, proFile, wksFile]);
 src/
 ├── sch-viewer/          # 原理图预览功能
 │   └── index.ts         # SchematicViewer 类
-├── pcb-viewer/          # PCB 预览功能（规划中）
+├── pcb-viewer/          # PCB 预览功能
+│   └── index.ts         # PCBViewer 类
 ├── 3d-viewer/           # 3D 模型预览功能（规划中）
 ├── shared/              # 共享模块
 │   └── types.ts         # 共享类型定义

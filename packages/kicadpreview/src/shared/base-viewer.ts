@@ -10,6 +10,7 @@ export abstract class BaseEcadViewer {
     protected container: HTMLElement;
     protected savedEl: EcadViewerElement | null = null;
     protected protectedTypes: readonly string[] = KICAD_EXTENSIONS;
+    private loading = false;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -17,6 +18,8 @@ export abstract class BaseEcadViewer {
     }
 
     protected createViewer(): EcadViewerElement {
+        // 清空容器中所有子元素，确保只有一个 viewer
+        this.container.innerHTML = "";
         const el = document.createElement("ecad-viewer") as EcadViewerElement;
         el.style.width = "100%";
         el.style.height = "100%";
@@ -39,7 +42,7 @@ export abstract class BaseEcadViewer {
         }
     }
 
-    private cleanupObserver: MutationObserver | null = null;
+    protected cleanupObserver: MutationObserver | null = null;
 
     private injectChromeCSS(root: ShadowRoot | HTMLElement): void {
         const style = document.createElement("style");
@@ -85,6 +88,16 @@ export abstract class BaseEcadViewer {
     }
 
     protected async doLoad(sources: EcadSources, opts?: LoadOptions): Promise<void> {
+        const hasSources = (sources.urls && sources.urls.length > 0)
+                        || (sources.blobs && sources.blobs.length > 0);
+        if (!hasSources) {
+            throw new Error("没有有效的 KiCad 文件（支持 .kicad_sch / .kicad_pcb / .kicad_pro / .kicad_wks）");
+        }
+        // 防止并发加载
+        if (this.loading) {
+            throw new Error("当前正在加载中，请稍后再试");
+        }
+        this.loading = true;
         this.resetViewer();
         try {
             await this.beforeLoad(opts);
@@ -98,6 +111,8 @@ export abstract class BaseEcadViewer {
         } catch (err) {
             this.restoreViewer();
             throw err;
+        } finally {
+            this.loading = false;
         }
     }
 
@@ -120,6 +135,7 @@ export abstract class BaseEcadViewer {
     }
 
     dispose(): void {
+        this.loading = false;
         this.stopChromeCleanup();
         this.el.remove();
         this.savedEl = null;

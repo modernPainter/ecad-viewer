@@ -15,6 +15,14 @@ export class SchematicViewer {
     dispose(): void;
 }
 
+export class PCBViewer {
+    constructor(container: HTMLElement);
+    loadFromUrls(urls: string[]): Promise<void>;
+    loadFromFiles(files: File[] | FileList): Promise<void>;
+    readonly element: HTMLElement;
+    dispose(): void;
+}
+
 export class ECadViewerHelper {
     constructor(container: HTMLElement);
     loadFromUrls(urls: string[], opts?: LoadOptions): Promise<void>;

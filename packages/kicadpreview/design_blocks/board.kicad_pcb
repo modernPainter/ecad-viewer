@@ -1,0 +1,8 @@
+(kicad_pcb (version 20221018) (generator pcbnew)
+  (general
+    (thickness 1.6)
+  )
+  (setup
+    (pad_to_mask_clearance 0)
+  )
+)
