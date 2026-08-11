@@ -148,6 +148,24 @@ export abstract class BaseEcadViewer {
         return this.viewerCreated ? this.el : null;
     }
 
+    /* 适配屏幕：将图纸缩放并居中到当前容器尺寸 */
+    fitScreen(): void {
+        if (!this.viewerCreated) return;
+        const root = this.el.shadowRoot;
+        if (!root) return;
+
+        const apps: { viewer?: { zoom_fit_top_item?(): void } }[] = [
+            root.querySelector("kc-schematic-app") as any,
+            root.querySelector("kc-board-app") as any,
+        ];
+
+        for (const app of apps) {
+            if (app?.viewer?.zoom_fit_top_item) {
+                app.viewer.zoom_fit_top_item();
+            }
+        }
+    }
+
     dispose(): void {
         this.loading = false;
         this.stopChromeCleanup();

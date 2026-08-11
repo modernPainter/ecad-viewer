@@ -92,13 +92,14 @@ new SchematicViewer(container: HTMLElement)
 |------|------|
 | `loadFromUrls(urls: string[])` | 从 URL 加载 KiCad 文件（`.kicad_sch`、`.kicad_pcb`、`.kicad_pro`、`.kicad_wks`） |
 | `loadFromFiles(files: File[] \| FileList)` | 从文件列表加载，自动识别 KiCad 文件 |
+| `fitScreen()` | 将图纸缩放并居中到当前容器尺寸，适用于容器大小变化后重新适配 |
 | `dispose()` | 销毁实例，释放 DOM 资源 |
 
 #### 属性
 
 | 属性 | 说明 |
 |------|------|
-| `element` | 获取底层 `ecad-viewer` DOM 元素 |
+| `element` | 获取底层 `ecad-viewer` DOM 元素（首次 `loadFromXxx()` 之前为 `null`） |
 
 ---
 
@@ -118,13 +119,14 @@ new PCBViewer(container: HTMLElement)
 |------|------|
 | `loadFromUrls(urls: string[])` | 从 URL 加载 KiCad 文件（`.kicad_sch`、`.kicad_pcb`、`.kicad_pro`、`.kicad_wks`） |
 | `loadFromFiles(files: File[] \| FileList)` | 从文件列表加载，自动识别 KiCad 文件 |
+| `fitScreen()` | 将图纸缩放并居中到当前容器尺寸，适用于容器大小变化后重新适配 |
 | `dispose()` | 销毁实例，释放 DOM 资源 |
 
 #### 属性
 
 | 属性 | 说明 |
 |------|------|
-| `element` | 获取底层 `ecad-viewer` DOM 元素 |
+| `element` | 获取底层 `ecad-viewer` DOM 元素（首次 `loadFromXxx()` 之前为 `null`） |
 
 ---
 
@@ -144,13 +146,14 @@ new ECadViewerHelper(container: HTMLElement)
 |------|------|
 | `loadFromUrls(urls: string[], opts?: { glbUrl?: string })` | 从 URL 加载 KiCad 文件，可选加载 3D 模型 |
 | `loadFromFiles(files: File[] \| FileList)` | 从文件列表加载，自动识别 `.kicad_sch`、`.kicad_pcb`、`.kicad_pro`、`.kicad_wks`、`.glb`、`.step`、`.stp` |
+| `fitScreen()` | 将图纸缩放并居中到当前容器尺寸，适用于容器大小变化后重新适配 |
 | `dispose()` | 销毁实例，释放 DOM 和内存资源 |
 
 #### 属性
 
 | 属性 | 说明 |
 |------|------|
-| `element` | 获取底层 `ecad-viewer` DOM 元素 |
+| `element` | 获取底层 `ecad-viewer` DOM 元素（首次 `loadFromXxx()` 之前为 `null`） |
 
 ## 使用示例
 
@@ -220,6 +223,21 @@ await viewer.loadFromUrls([...]);
 
 // 页面卸载时释放资源
 viewer.dispose();
+```
+
+#### 响应式容器适配
+
+`loadFromUrls()` / `loadFromFiles()` 加载完成后会自动适配当前容器尺寸。如果容器尺寸后续发生变化（如拖拽 resize、全屏切换等），可调用 `fitScreen()` 重新适配：
+
+```javascript
+const viewer = new SchematicViewer(container);
+await viewer.loadFromUrls(["/schematic.kicad_sch"]);
+
+// 监听容器尺寸变化
+const observer = new ResizeObserver(() => {
+    viewer.fitScreen();
+});
+observer.observe(container);
 ```
 
 ---
@@ -382,6 +400,8 @@ module.exports = {
 ### 2. 容器尺寸
 
 查看器会将内部元素设置为 `width: 100%; height: 100%`，请确保容器元素有明确的宽高，否则查看器不会显示。
+
+容器尺寸变化后，调用 `viewer.fitScreen()` 可重新缩放图纸以适配新尺寸。
 
 ### 3. 资源释放
 
