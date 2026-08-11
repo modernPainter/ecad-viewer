@@ -103,7 +103,7 @@ let context = await esbuild.context({
 
                 code = code.replace(
                     /<a[\s\S]*?class="bottom-left-icon"[\s\S]*?<\/a>/,
-                    "null"
+                    "${null}"
                 );
 
                 return { contents: code, loader: "ts" };
@@ -192,7 +192,7 @@ let ctx2 = await esbuild.context({
 
                 code = code.replace(
                     /<a[\s\S]*?class="bottom-left-icon"[\s\S]*?<\/a>/,
-                    "null"
+                    "${null}"
                 );
 
                 return { contents: code, loader: "ts" };

@@ -95,11 +95,21 @@ export abstract class BaseEcadViewer {
         if (root) {
             this.injectChromeCSS(root);
 
-            // 单张图纸时隐藏 sidebar 切换按钮（无需切换）
+            // 单页时隐藏 toggle button，通过 rAF 轮询穿透子 Shadow DOM
             const pages = this.el.project?.pages;
             if (pages && pages.length <= 1) {
-                const btn = root.querySelector(".toggle-button") as HTMLElement | null;
-                if (btn) btn.style.display = "none";
+                let attempts = 0;
+                const tryHide = () => {
+                    const schApp = root.querySelector("kc-schematic-app");
+                    const btn = schApp?.shadowRoot?.querySelector(".toggle-button") as HTMLElement | null;
+                    if (btn) {
+                        btn.style.display = "none";
+                    } else if (attempts < 20) {
+                        attempts++;
+                        requestAnimationFrame(tryHide);
+                    }
+                };
+                tryHide();
             }
         }
         this.startChromeCleanup();
