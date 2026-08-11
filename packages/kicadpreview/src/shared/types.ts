@@ -14,6 +14,7 @@ export interface EcadViewerElement extends HTMLElement {
     loaded: boolean;
     project: {
         ov_3d_url?: string;
+        pages: Array<unknown>;
         load(sources: EcadSources): Promise<void>;
         on_loaded(): void;
     };

@@ -94,6 +94,13 @@ export abstract class BaseEcadViewer {
         const root = this.el.shadowRoot;
         if (root) {
             this.injectChromeCSS(root);
+
+            // 单张图纸时隐藏 sidebar 切换按钮（无需切换）
+            const pages = this.el.project?.pages;
+            if (pages && pages.length <= 1) {
+                const btn = root.querySelector(".toggle-button") as HTMLElement | null;
+                if (btn) btn.style.display = "none";
+            }
         }
         this.startChromeCleanup();
     }
