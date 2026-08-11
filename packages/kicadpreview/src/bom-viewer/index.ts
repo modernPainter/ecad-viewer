@@ -108,9 +108,9 @@ function renderCards(items: BomItem[]): string {
 function renderPlainTable(items: BomItem[]): string {
     if (!items.length) return "无 BOM 数据";
     const header = BOM_COLUMNS.filter((c) => c.key !== "index").map((c) => c.label).join("\t");
-    const rows = items.map((item, i) => {
+    const rows = items.map((_item) => {
         return BOM_COLUMNS.filter((c) => c.key !== "index")
-            .map((col) => String(item[col.key as keyof BomItem] ?? ""))
+            .map((col) => String(_item[col.key as keyof BomItem] ?? ""))
             .join("\t");
     }).join("\n");
     return `${header}\n${rows}`;
@@ -126,12 +126,13 @@ function renderCsv(items: BomItem[]): string {
     return `${header}\n${rows}`;
 }
 
-/* ========== 样式（注入一次） ========== */
+/* ========== 样式（仅浏览器端注入一次） ========== */
 
 const MOBILE_BREAKPOINT = 640;
 let styleInjected = false;
 
 function injectStyles(): void {
+    if (typeof document === "undefined") return; // SSR: no-op
     if (styleInjected) return;
     styleInjected = true;
 
@@ -238,31 +239,35 @@ function injectStyles(): void {
 
 export class BomViewer {
     private container: HTMLElement;
-    private wrapper: HTMLElement;
+    private wrapper: HTMLElement | null = null;
     private items: BomItem[] = [];
     private disposed = false;
-    private mq: MediaQueryList;
+    private mq: MediaQueryList | null = null;
     private mqHandler: (() => void) | null = null;
 
     constructor(container: HTMLElement) {
-        injectStyles();
         this.container = container;
-        this.wrapper = document.createElement("div");
-        this.wrapper.className = "bom-viewer";
-        this.container.appendChild(this.wrapper);
 
-        // 监听宽度变化，切换表格 / 卡片
-        this.mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
-        this.mqHandler = () => this.render();
-        this.mq.addEventListener("change", this.mqHandler);
+        // 样式注入（SSR 安全：仅在浏览器端执行）
+        injectStyles();
 
-        this.renderEmpty();
+        // 监听窗口宽度切换表格/卡片（SSR 安全：仅在浏览器端监听）
+        if (typeof window !== "undefined") {
+            this.mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+            this.mqHandler = () => this.render();
+            this.mq.addEventListener("change", this.mqHandler);
+        }
     }
 
     /* ---- 公开 API ---- */
 
     get bomItems(): readonly BomItem[] {
         return this.items;
+    }
+
+    /* 当前是否为手机模式（SSR 安全） */
+    get isMobile(): boolean {
+        return this.mq ? this.mq.matches : false;
     }
 
     async loadFromUrls(urls: string[]): Promise<BomItem[]> {
@@ -305,21 +310,20 @@ export class BomViewer {
         );
     }
 
-    /** 当前是否为手机模式 */
-    get isMobile(): boolean {
-        return this.mq.matches;
-    }
-
     toCsv(): string { return renderCsv(this.items); }
     toTsv(): string { return renderPlainTable(this.items); }
 
     dispose(): void {
         this.disposed = true;
-        if (this.mqHandler) {
+        if (this.mq && this.mqHandler) {
             this.mq.removeEventListener("change", this.mqHandler);
             this.mqHandler = null;
+            this.mq = null;
         }
-        this.wrapper.remove();
+        if (this.wrapper) {
+            this.wrapper.remove();
+            this.wrapper = null;
+        }
     }
 
     /* ---- 内部 ---- */
@@ -328,23 +332,37 @@ export class BomViewer {
         if (this.disposed) throw new Error("BomViewer 已销毁");
     }
 
+    /* 懒创建 wrapper 并挂载到容器 */
+    private ensureWrapper(): HTMLElement {
+        if (typeof document === "undefined") {
+            // SSR: 返回一个无害的占位对象
+            throw new Error("BomViewer 无法在服务端渲染 DOM");
+        }
+        if (!this.wrapper) {
+            this.wrapper = document.createElement("div");
+            this.wrapper.className = "bom-viewer";
+            this.container.appendChild(this.wrapper);
+        }
+        return this.wrapper;
+    }
+
     private showLoading(): void {
-        this.wrapper.innerHTML = '<div class="bom-loading">正在提取 BOM 数据…</div>';
+        const w = this.ensureWrapper();
+        w.innerHTML = '<div class="bom-loading">正在提取 BOM 数据…</div>';
     }
 
     private showError(msg: string): void {
-        this.wrapper.innerHTML = `<div class="bom-error">${msg}</div>`;
+        const w = this.ensureWrapper();
+        w.innerHTML = `<div class="bom-error">${msg}</div>`;
     }
 
     private renderEmpty(): void {
-        this.wrapper.innerHTML = this.mq.matches
-            ? renderCards([])
-            : renderTable([]);
+        const w = this.ensureWrapper();
+        w.innerHTML = this.isMobile ? renderCards([]) : renderTable([]);
     }
 
     private render(): void {
-        this.wrapper.innerHTML = this.mq.matches
-            ? renderCards(this.items)
-            : renderTable(this.items);
+        const w = this.ensureWrapper();
+        w.innerHTML = this.isMobile ? renderCards(this.items) : renderTable(this.items);
     }
 }

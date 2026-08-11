@@ -22,7 +22,7 @@ export class SchematicViewer {
     constructor(container: HTMLElement);
     loadFromUrls(urls: string[]): Promise<void>;
     loadFromFiles(files: File[] | FileList): Promise<void>;
-    readonly element: HTMLElement;
+    readonly element: HTMLElement | null;
     dispose(): void;
 }
 
@@ -30,7 +30,7 @@ export class PCBViewer {
     constructor(container: HTMLElement);
     loadFromUrls(urls: string[]): Promise<void>;
     loadFromFiles(files: File[] | FileList): Promise<void>;
-    readonly element: HTMLElement;
+    readonly element: HTMLElement | null;
     dispose(): void;
 }
 
@@ -50,6 +50,8 @@ export class ECadViewerHelper {
     constructor(container: HTMLElement);
     loadFromUrls(urls: string[], opts?: LoadOptions): Promise<void>;
     loadFromFiles(files: File[] | FileList): Promise<void>;
-    readonly element: HTMLElement;
+    readonly element: HTMLElement | null;
     dispose(): void;
 }
+
+export function ensureEcadViewer(): Promise<void>;

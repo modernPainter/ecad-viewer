@@ -1,29 +1,42 @@
 import type { EcadBlob, EcadSources, EcadViewerElement } from "../shared/types";
 import { KICAD_EXTENSIONS } from "../shared/types";
+import { ensureEcadViewer } from "../index";
 
 export interface LoadOptions {
     glbUrl?: string;
 }
 
+/* 判断当前是否运行在浏览器环境 */
+const isBrowser = typeof window !== "undefined" && typeof document !== "undefined";
+
 export abstract class BaseEcadViewer {
-    protected el: EcadViewerElement;
+    protected el!: EcadViewerElement;
     protected container: HTMLElement;
     protected savedEl: EcadViewerElement | null = null;
     protected protectedTypes: readonly string[] = KICAD_EXTENSIONS;
+    protected cleanupObserver: MutationObserver | null = null;
     private loading = false;
+    private viewerCreated = false;
 
     constructor(container: HTMLElement) {
         this.container = container;
+        // SSR-safe: DOM 创建延迟到首次 doLoad() 时
+    }
+
+    /* 懒初始化 <ecad-viewer> 自定义元素 */
+    private async ensureViewer(): Promise<void> {
+        if (this.viewerCreated) return;
+        await ensureEcadViewer();
+        this.viewerCreated = true;
         this.el = this.createViewer();
     }
 
     protected createViewer(): EcadViewerElement {
-        // 清空容器中所有子元素，确保只有一个 viewer
         this.container.innerHTML = "";
         const el = document.createElement("ecad-viewer") as EcadViewerElement;
         el.style.width = "100%";
         el.style.height = "100%";
-        window.hide_header = true;
+        (window as any).hide_header = true;
         this.container.appendChild(el);
         return el;
     }
@@ -41,8 +54,6 @@ export abstract class BaseEcadViewer {
             this.savedEl = null;
         }
     }
-
-    protected cleanupObserver: MutationObserver | null = null;
 
     private injectChromeCSS(root: ShadowRoot | HTMLElement): void {
         const style = document.createElement("style");
@@ -93,11 +104,14 @@ export abstract class BaseEcadViewer {
         if (!hasSources) {
             throw new Error("没有有效的 KiCad 文件（支持 .kicad_sch / .kicad_pcb / .kicad_pro / .kicad_wks）");
         }
-        // 防止并发加载
         if (this.loading) {
             throw new Error("当前正在加载中，请稍后再试");
         }
         this.loading = true;
+
+        // 首次加载时创建 viewer DOM
+        await this.ensureViewer();
+
         this.resetViewer();
         try {
             await this.beforeLoad(opts);
@@ -130,14 +144,17 @@ export abstract class BaseEcadViewer {
         return matched.map((f, i) => ({ filename: f.name, content: contents[i] }));
     }
 
-    get element(): HTMLElement {
-        return this.el;
+    get element(): HTMLElement | null {
+        return this.viewerCreated ? this.el : null;
     }
 
     dispose(): void {
         this.loading = false;
         this.stopChromeCleanup();
-        this.el.remove();
+        if (this.viewerCreated) {
+            this.el.remove();
+        }
         this.savedEl = null;
+        this.viewerCreated = false;
     }
 }
