@@ -37,6 +37,22 @@ if(!globalThis.document){
 }
 `;
 
+/* ---- 公共注入：给 ecad_viewer.ts 注入全局主题切换 API（两个构建 context 共用） ---- */
+const inject_theme_api = (code) => {
+    return code.replace(
+        'import { length } from "../base/iterator";',
+        `import { length } from "../base/iterator";
+import { Preferences } from "../kicanvas/preferences";
+import themes from "../kicanvas/themes";
+
+/* kicadpreview: 动态切换主题 */
+(window as any).set_ecad_theme = (name: string) => {
+    Preferences.INSTANCE.theme = themes.by_name(name);
+    Preferences.INSTANCE.save();
+};`
+    );
+};
+
 /* ---- 主入口构建 ---- */
 let context = await esbuild.context({
     entryPoints: {
@@ -105,6 +121,8 @@ let context = await esbuild.context({
                     /<a[\s\S]*?class="bottom-left-icon"[\s\S]*?<\/a>/,
                     "${null}"
                 );
+
+                code = inject_theme_api(code);
 
                 return { contents: code, loader: "ts" };
             });
@@ -194,6 +212,8 @@ let ctx2 = await esbuild.context({
                     /<a[\s\S]*?class="bottom-left-icon"[\s\S]*?<\/a>/,
                     "${null}"
                 );
+
+                code = inject_theme_api(code);
 
                 return { contents: code, loader: "ts" };
             });

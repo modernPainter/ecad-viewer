@@ -70,6 +70,11 @@ export class SchematicViewer extends DocumentViewer<
         return this.document.filename;
     }
 
+    // 原理图预览不展示图纸边框、标题栏等 drawing sheet 内容
+    protected override should_paint_drawing_sheet(): boolean {
+        return false;
+    }
+
     set focus_net_item(ref: string | undefined) {
         this.#focus_net_item = ref;
     }
@@ -209,8 +214,8 @@ export class SchematicViewer extends DocumentViewer<
 
     override create_renderer(canvas: HTMLCanvasElement): Renderer {
         const renderer = new Canvas2DRenderer(canvas);
-        renderer.state.fill = this.theme.note;
-        renderer.state.stroke = this.theme.note;
+        renderer.state.fill = this.theme.content;
+        renderer.state.stroke = this.theme.content;
         renderer.state.stroke_width = 0.1524;
         renderer.background_color = Color.gray;
         return renderer;

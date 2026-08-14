@@ -165,6 +165,15 @@ export abstract class BaseEcadViewer {
         return this.viewerCreated ? this.el : null;
     }
 
+    /* 动态切换主题（dark/light），需在加载完成后调用 */
+    setTheme(name: "kicad" | "dark"): void {
+        if (!this.viewerCreated) return;
+        const setter = (window as any).set_ecad_theme as ((n: string) => void) | undefined;
+        if (typeof setter === "function") {
+            setter(name);
+        }
+    }
+
     /* 适配屏幕：将图纸缩放并居中到当前容器尺寸 */
     fitScreen(): void {
         if (!this.viewerCreated) return;

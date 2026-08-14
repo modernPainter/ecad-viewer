@@ -29,8 +29,6 @@ import { SchematicItemPainter } from "./base";
  *
  */
 export class LibSymbolPinPainter extends SchematicItemPainter {
-    public static PinNameColor = new Color(0, 100 / 255, 100 / 255);
-
     override classes = [schematic_items.LibSymbolPin];
 
     override layers_for(item: schematic_items.LibSymbolPin) {
@@ -56,7 +54,7 @@ export class LibSymbolPinPainter extends SchematicItemPainter {
         const current_symbol_transform =
             this.view_painter.current_symbol_transform!;
 
-        const color = this.dim_if_needed(this.theme.pin);
+        const color = this.dim_if_needed(this.theme.content);
 
         LibSymbolPinPainter.apply_symbol_transformations(
             pin,
@@ -267,7 +265,7 @@ export class LibSymbolPinPainter extends SchematicItemPainter {
                 pin.position,
                 name_placement,
                 def.name.effects,
-                LibSymbolPinPainter.PinNameColor,
+                gfx.state.stroke,
             );
         }
 

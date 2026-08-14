@@ -107,6 +107,8 @@ export interface SchematicTheme extends BaseTheme {
     anchor: Color;
     aux_items: Color;
     brightened: Color;
+    // 原理图内容统一颜色（器件边框、连线、引脚、文字、标签等）
+    content: Color;
     bus: Color;
     bus_junction: Color;
     component_body: Color;

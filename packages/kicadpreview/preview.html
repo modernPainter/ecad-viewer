@@ -97,8 +97,10 @@
                 <button id="preview-tab" class="active">预览</button>
                 <button id="bom-tab">BOM</button>
                 <span class="sep"></span>
-                <button id="sch-sample-btn">原理图示例</button>
+                <button id="sch-sample-btn">原理图(单张)</button>
+                <button id="sch-two-btn">原理图(两张)</button>
                 <button id="pcb-sample-btn">PCB 示例</button>
+                <button id="theme-btn">主题: 浅色</button>
                 <button id="open-btn">打开文件</button>
                 <input type="file" id="file-input" accept=".kicad_sch,.kicad_pcb,.kicad_pro,.kicad_wks" multiple />
                 <span id="status" class="status">就绪</span>
@@ -232,12 +234,22 @@
                 e.target.value = "";
             });
 
-            document.getElementById("sch-sample-btn").addEventListener("click", () => doLoad(["/design_blocks/1.kicad_sch"], null));
-            document.getElementById("pcb-sample-btn").addEventListener("click", () => doLoad(["/design_blocks/board.kicad_pcb"], null));
+            document.getElementById("sch-sample-btn").addEventListener("click", () => doLoad(["design_blocks/1.kicad_sch"], null));
+            document.getElementById("sch-two-btn").addEventListener("click", () => doLoad(["design_blocks/1.kicad_sch", "design_blocks/2.kicad_sch"], null));
+            document.getElementById("pcb-sample-btn").addEventListener("click", () => doLoad(["design_blocks/board.kicad_pcb"], null));
+
+            /* ---- 主题切换 ---- */
+            let dark = false;
+            document.getElementById("theme-btn").addEventListener("click", () => {
+                dark = !dark;
+                const name = dark ? "dark" : "kicad";
+                viewer.setTheme(name);
+                document.getElementById("theme-btn").textContent = "主题: " + (dark ? "深色" : "浅色");
+            });
 
             /* ---- 启动 ---- */
             setTab("preview");
-            doLoad(["/design_blocks/1.kicad_sch"], null);
+            doLoad(["design_blocks/1.kicad_sch"], null);
         </script>
     </body>
 </html>

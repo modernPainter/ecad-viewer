@@ -15,8 +15,8 @@ import type { DocumentPainter, PaintableDocument } from "./painter";
 import { ViewLayerNames, type ViewLayerSet } from "./view-layers";
 import { Viewer } from "./viewer";
 import { later } from "../../base/async";
-import { DrawingSheetPainter } from "../drawing-sheet/painter";
 import { is_showing_design_block } from "../../ecad-viewer/ecad_viewer_global";
+import { DrawingSheetPainter } from "../drawing-sheet/painter";
 import { Color } from "../../graphics";
 
 type ViewableDocument = DrawingSheetDocument &
@@ -57,6 +57,12 @@ export abstract class DocumentViewer<
     protected abstract create_layer_set(): ViewLayerSetT;
     protected get grid_origin(): Vec2 {
         return new Vec2(0, 0);
+    }
+
+    // 是否绘制图框、标题栏等 drawing sheet 内容。默认 true（如 PCB 预览照常绘制），
+    // 原理图视图为隐藏图纸会覆盖为 false。
+    protected should_paint_drawing_sheet(): boolean {
+        return true;
     }
 
     override async load(src: DocumentT) {
@@ -110,8 +116,12 @@ export abstract class DocumentViewer<
         this.painter = this.create_painter();
         this.painter.paint(this.document);
 
-        // Paint the drawing sheet
-        if (!this.document.is_converted_from_ad && !is_showing_design_block())
+        // Paint the drawing sheet（schematic 视图会覆盖 should_paint_drawing_sheet 关闭此项）
+        if (
+            !this.document.is_converted_from_ad &&
+            !is_showing_design_block() &&
+            this.should_paint_drawing_sheet()
+        )
             new DrawingSheetPainter(
                 this.renderer,
                 this.layers,

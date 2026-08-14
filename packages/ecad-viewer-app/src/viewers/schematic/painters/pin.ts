@@ -54,7 +54,7 @@ export class PinPainter extends SchematicItemPainter {
         const current_symbol_transform =
             this.view_painter.pin_transform.get(p)!;
 
-        const color = this.dim_if_needed(this.theme.pin);
+        const color = this.dim_if_needed(this.theme.content);
 
         PinPainter.apply_symbol_transformations(pin, current_symbol_transform);
 

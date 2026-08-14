@@ -58,12 +58,8 @@ export abstract class SchematicItemPainter extends ItemPainter {
             return { width: 0, color: null };
         }
 
-        const default_stroke =
-            layer.name == LayerNames.symbol_foreground
-                ? this.theme.component_outline
-                : this.theme.note;
-
-        const color = this.dim_if_needed(item.stroke?.color ?? default_stroke);
+        // 内容统一颜色（器件边框、连线、图形等）
+        const color = this.dim_if_needed(this.theme.content);
 
         return { width, color };
     }
@@ -74,31 +70,17 @@ export abstract class SchematicItemPainter extends ItemPainter {
     ) {
         const fill_type = item.fill?.type ?? "none";
 
-        if (fill_type == "none") {
+        // 无填充或背景填充均不填充
+        if (fill_type == "none" || fill_type == "background") {
             return null;
         }
 
-        if (
-            fill_type == "background" &&
-            layer.name != LayerNames.symbol_background
-        ) {
+        // IC 等符号内部不填充，只保留边框
+        if (layer.name == LayerNames.symbol_background) {
             return null;
         }
 
-        let color;
-
-        switch (fill_type) {
-            case "background":
-                color = this.theme.component_body;
-                break;
-            case "outline":
-                color = this.theme.component_outline;
-                break;
-            case "color":
-                color = item.fill!.color;
-                break;
-        }
-
-        return this.dim_if_needed(color);
+        // 填充统一使用内容色
+        return this.dim_if_needed(this.theme.content);
     }
 }

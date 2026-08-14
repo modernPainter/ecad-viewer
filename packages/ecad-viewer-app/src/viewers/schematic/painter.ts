@@ -123,7 +123,11 @@ class WirePainter extends SchematicItemPainter {
 
     paint(layer: ViewLayer, w: schematic_items.Wire) {
         this.gfx.line(
-            new Polyline(w.pts, this.gfx.state.stroke_width, this.theme.wire),
+            new Polyline(
+                w.pts,
+                this.gfx.state.stroke_width,
+                this.theme.content,
+            ),
         );
     }
 }
@@ -140,7 +144,7 @@ class BusPainter extends SchematicItemPainter {
             new Polyline(
                 w.pts,
                 schematic_items.DefaultValues.bus_width,
-                this.theme.bus,
+                this.theme.content,
             ),
         );
     }
@@ -158,7 +162,7 @@ class BusEntryPainter extends SchematicItemPainter {
             new Polyline(
                 [be.at.position, be.at.position.add(be.size)],
                 schematic_items.DefaultValues.wire_width,
-                this.theme.wire,
+                this.theme.content,
             ),
         );
     }
@@ -306,7 +310,7 @@ class JunctionPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, j: schematic_items.Junction) {
-        const color = this.theme.junction;
+        const color = this.theme.content;
         this.gfx.circle(
             new Circle(j.at.position, (j.diameter || 1) / 2, color),
         );
@@ -321,7 +325,7 @@ class NoConnectPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, nc: schematic_items.NoConnect): void {
-        const color = this.theme.no_connect;
+        const color = this.theme.content;
         const width = schematic_items.DefaultValues.line_width;
         const size = schematic_items.DefaultValues.noconnect_size / 2;
 
@@ -368,14 +372,8 @@ class TextPainter extends SchematicItemPainter {
         schtext.apply_at(t.at);
         schtext.apply_effects(t.effects);
 
-        const font_color = t.effects.font.color;
-        if (font_color.is_transparent_black) {
-            // The color was not specified.
-            const text_color = this.theme.note;
-            schtext.attributes.color = this.dim_if_needed(text_color);
-        } else {
-            schtext.attributes.color = this.dim_if_needed(font_color);
-        }
+        // 文本统一使用内容色
+        schtext.attributes.color = this.dim_if_needed(this.theme.content);
 
         this.gfx.state.push();
         StrokeFont.default().draw(
@@ -422,33 +420,8 @@ class PropertyPainter extends SchematicItemPainter {
             return;
         }
 
-        let color = this.theme.fields;
-        if (p.parent instanceof schematic_items.SchematicSheet) {
-            color = this.theme.sheet_fields;
-        }
-
-        const font_color = p.effects.font.color;
-        if (font_color.is_transparent_black) {
-            // The color was not specified.
-            switch (p.name) {
-                case "Reference":
-                    color = this.theme.reference;
-                    break;
-                case "Value":
-                    color = this.theme.value;
-                    break;
-                case "Sheet name":
-                    color = this.theme.sheet_name;
-                    break;
-                case "Sheet file":
-                    color = this.theme.sheet_filename;
-                    break;
-            }
-
-            color = this.dim_if_needed(color);
-        } else {
-            color = this.dim_if_needed(font_color);
-        }
+        // 属性文本（Reference/Value 等）统一使用内容色
+        const color = this.dim_if_needed(this.theme.content);
 
         const parent = p.parent as schematic_items.SchematicSymbol;
         const transform = this.view_painter.current_symbol_transform;
@@ -539,9 +512,7 @@ class LibTextPainter extends SchematicItemPainter {
         libtext.apply_at(lt.at);
         libtext.apply_symbol_transformations(current_symbol_transform);
 
-        libtext.attributes.color = this.dim_if_needed(
-            this.theme.component_outline,
-        );
+        libtext.attributes.color = this.dim_if_needed(this.theme.content);
 
         // This gets the absolute world coordinates where the text should
         // be drawn.
@@ -587,19 +558,6 @@ class LibTextPainter extends SchematicItemPainter {
     }
 }
 
-class PaperPainter extends SchematicItemPainter {
-    override classes = [BBox];
-    layers_for(item: schematic_items.SchematicSheet) {
-        return [LayerNames.drawing_sheet_bg];
-    }
-
-    paint(layer: ViewLayer, ss: BBox) {
-        if (layer.name == LayerNames.drawing_sheet_bg) {
-            this.gfx.polygon(Polygon.from_BBox(ss, Color.white));
-        }
-    }
-}
-
 class SchematicSheetPainter extends SchematicItemPainter {
     classes = [schematic_items.SchematicSheet];
 
@@ -614,7 +572,7 @@ class SchematicSheetPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, ss: schematic_items.SchematicSheet) {
-        const outline_color = this.theme.sheet;
+        const outline_color = this.theme.content;
         const fill_color = this.theme.sheet_background;
         const bbox = new BBox(
             ss.at.position.x,
@@ -664,7 +622,7 @@ class TablePainter extends SchematicItemPainter {
                   table.border.stroke.color.b,
                   table.border.stroke.color.a,
               )
-            : this.theme.note;
+            : this.theme.content;
         const strokeWidth = table.border?.stroke?.width && table.border.stroke.width > 0 ? table.border.stroke.width : 0.1;
 
         if (table.border?.external) {
@@ -748,7 +706,7 @@ class TablePainter extends SchematicItemPainter {
                           cell.fill.color.b,
                           cell.fill.color.a,
                       )
-                    : this.theme.note;
+                    : this.theme.content;
                 this.gfx.polygon(Polygon.from_BBox(cellBbox, fillColor));
             }
 
@@ -808,7 +766,6 @@ export class SchematicPainter extends BaseSchematicPainter {
             new SchematicSheetPainter(this, gfx),
             new ImagePainter(this, gfx),
             new TablePainter(this, gfx),
-            new PaperPainter(this, gfx),
             new BezierPainter(this, gfx),
         ];
     }

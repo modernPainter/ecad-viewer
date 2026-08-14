@@ -128,7 +128,7 @@ export class NetLabelPainter extends LabelPainter {
     override classes: any[] = [schematic_items.NetLabel];
 
     override get color() {
-        return this.theme.label_local;
+        return this.theme.content;
     }
     override get_schematic_text_offset(
         l: schematic_items.Label,
@@ -177,7 +177,7 @@ export class GlobalLabelPainter extends LabelPainter {
     override classes: any[] = [schematic_items.GlobalLabel];
 
     override get color() {
-        return this.theme.label_global;
+        return this.theme.content;
     }
 
     override get_schematic_text_offset(
@@ -279,7 +279,7 @@ export class HierarchicalLabelPainter extends LabelPainter {
     override classes: any[] = [schematic_items.HierarchicalLabel];
 
     override get color() {
-        return this.theme.label_hier;
+        return this.theme.content;
     }
 
     override after_apply(

@@ -1,19 +1,5 @@
-packages/kicadpreview 是预览的 npm 包（包名：kicadpreview）
+对于原理图修改主题色，这种修改如果只限于在目录kicadpreview是不是比较受束缚，我已经创建新的分支，你可以直接基于ecad-viewer目录的所有文件修改，只是最后由kicadpreview打npm包使用，你可以配置所有颜色或者填充色，但不可影响原来使用的功能，换言之，整个项目都为kicadpreview打包支持dark与light所服务
 
-已完成调整内容：
-1. ✅ 对预览功能进行拆分，暴露原理图预览功能的接口（SchematicViewer）
-2. ✅ 预览切换 tab 的头部已移除
-3. ✅ 预览中 `<a class="bottom-left-icon">` 底部图标已移除
-4. ✅ 代码只限在 packages/kicadpreview 内，其它外部代码仅作参考引用
-5. 🔲 后续陆续暴露其他功能接口（pcb-viewer、3d-viewer 等）
-6. ✅ 当前工作重点为优化原理图预览功能
-7. ✅ 目录已从 sch-viewer 更名为 kicadpreview，内部按功能划分子目录
-
-目录结构：
-src/
-├── sch-viewer/          # 原理图预览功能（已实现）
-├── pcb-viewer/          # PCB 预览功能（规划中）
-├── 3d-viewer/           # 3D 模型预览功能（规划中）
-├── shared/              # 共享模块
-├── ecad-viewer-helper.ts # 完整功能预览器
-└── index.ts             # 统一导出
+我看代码改动，你还是仅限目录kicadpreview中，但是目前未达到我的期望
+1. ic的内部不需要填充色，只需要边框色
+2. 原理图预览的图纸，不需要底色
