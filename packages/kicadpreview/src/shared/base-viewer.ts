@@ -17,6 +17,8 @@ export abstract class BaseEcadViewer {
     protected cleanupObserver: MutationObserver | null = null;
     private loading = false;
     private viewerCreated = false;
+    /** 设为 true 隐藏点击器件时弹出的属性面板 */
+    hidePropertiesPanel = false;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -62,6 +64,33 @@ export abstract class BaseEcadViewer {
             .bottom-left-icon { display: none !important; }
         `;
         root.appendChild(style);
+
+        if (this.hidePropertiesPanel) {
+            const injectSubStyle = (selector: string, rules: string) => {
+                let attempts = 0;
+                const tryInject = () => {
+                    const app = root.querySelector(selector) as HTMLElement | null;
+                    const sr = app?.shadowRoot;
+                    if (sr) {
+                        const s = document.createElement("style");
+                        s.textContent = rules;
+                        sr.appendChild(s);
+                    } else if (attempts < 20) {
+                        attempts++;
+                        requestAnimationFrame(tryInject);
+                    }
+                };
+                tryInject();
+            };
+            injectSubStyle(
+                "kc-schematic-app",
+                "kc-schematic-properties-panel { display: none !important; }",
+            );
+            injectSubStyle(
+                "kc-board-app",
+                "kc-board-properties-panel { display: none !important; }",
+            );
+        }
     }
 
     protected startChromeCleanup(): void {
