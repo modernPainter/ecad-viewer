@@ -1,0 +1,53 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "serve:ecad-viewer-app",
+			"type": "npm",
+			"script": "serve",
+			"path": "packages/ecad-viewer-app",
+			"isBackground": true,
+			"presentation": {
+				"focus": true,
+				"panel": "dedicated"
+			},
+			"group": {
+				"kind": "build"
+			},
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": [
+					{
+						"regexp": ".",
+						"file": 1,
+						"line": 1,
+						"column": 1,
+						"message": 1
+					}
+				],
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": {
+						"regexp": "\\[watch\\] build started"
+					},
+					"endsPattern": {
+						"regexp": "\\[watch\\] build finished"
+					}
+				}
+			}
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: watch - tsconfig.json"
+		}
+	]
+}

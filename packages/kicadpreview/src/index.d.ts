@@ -1,6 +1,6 @@
-import type { EcadBlob, EcadSources, EcadViewerElement } from "./shared/types";
+import type { EcadBlob, EcadSources, EcadViewerElement, ExportImageResult, ExportImageViewType } from "./shared/types";
 
-export type { EcadBlob, EcadSources, EcadViewerElement };
+export type { EcadBlob, EcadSources, EcadViewerElement, ExportImageResult, ExportImageViewType };
 export { KICAD_EXTENSIONS } from "./shared/types";
 
 export interface LoadOptions {
@@ -24,6 +24,7 @@ export class SchematicViewer {
     loadFromFiles(files: File[] | FileList): Promise<void>;
     setTheme(name: "kicad" | "dark"): void;
     fitScreen(): void;
+    exportImage(viewType?: ExportImageViewType): Promise<ExportImageResult | null>;
     /** 设为 true 隐藏点击器件时弹出的属性面板，默认 false */
     hidePropertiesPanel: boolean;
     readonly element: HTMLElement | null;
@@ -36,6 +37,7 @@ export class PCBViewer {
     loadFromFiles(files: File[] | FileList): Promise<void>;
     setTheme(name: "kicad" | "dark"): void;
     fitScreen(): void;
+    exportImage(viewType?: ExportImageViewType): Promise<ExportImageResult | null>;
     /** 设为 true 隐藏点击器件时弹出的属性面板，默认 false */
     hidePropertiesPanel: boolean;
     readonly element: HTMLElement | null;
@@ -60,6 +62,7 @@ export class ECadViewerHelper {
     loadFromFiles(files: File[] | FileList): Promise<void>;
     setTheme(name: "kicad" | "dark"): void;
     fitScreen(): void;
+    exportImage(viewType?: ExportImageViewType): Promise<ExportImageResult | null>;
     /** 设为 true 隐藏点击器件时弹出的属性面板，默认 false */
     hidePropertiesPanel: boolean;
     readonly element: HTMLElement | null;

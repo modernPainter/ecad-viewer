@@ -1,6 +1,6 @@
 {
     "name": "kicadpreview",
-    "version": "1.0.11",
+    "version": "1.0.12",
     "description": "KiCad ECAD viewer — SCH / PCB / 3D / BOM preview",
     "type": "module",
     "main": "./dist/ecad-viewer.js",

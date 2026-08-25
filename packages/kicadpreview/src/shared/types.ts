@@ -10,6 +10,14 @@ export interface EcadSources {
     blobs: EcadBlob[];
 }
 
+export type ExportImageViewType = "SCH" | "PCB" | "3D" | "BOM";
+
+export interface ExportImageResult {
+    image: string;
+    width: number;
+    height: number;
+}
+
 export interface EcadViewerElement extends HTMLElement {
     loaded: boolean;
     project: {
@@ -19,4 +27,5 @@ export interface EcadViewerElement extends HTMLElement {
         on_loaded(): void;
     };
     update(): Promise<void>;
+    exportImage(viewType?: ExportImageViewType): Promise<ExportImageResult | null>;
 }
