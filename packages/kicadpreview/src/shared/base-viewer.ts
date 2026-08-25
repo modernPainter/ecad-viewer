@@ -1,4 +1,4 @@
-import type { EcadBlob, EcadSources, EcadViewerElement } from "../shared/types";
+import type { EcadBlob, EcadSources, EcadViewerElement, ExportImageResult, ExportImageViewType } from "../shared/types";
 import { KICAD_EXTENSIONS } from "../shared/types";
 import { ensureEcadViewer } from "../index";
 
@@ -192,6 +192,14 @@ export abstract class BaseEcadViewer {
 
     get element(): HTMLElement | null {
         return this.viewerCreated ? this.el : null;
+    }
+
+    /* 导出当前视图为 PNG 图片；返回 dataURL + 尺寸，未加载或视图不可用时返回 null */
+    async exportImage(viewType?: ExportImageViewType): Promise<ExportImageResult | null> {
+        if (!this.viewerCreated) {
+            throw new Error("尚未加载，请先调用 loadFromUrls/loadFromFiles");
+        }
+        return this.el.exportImage(viewType);
     }
 
     /* 适配屏幕：将图纸缩放并居中到当前容器尺寸 */
